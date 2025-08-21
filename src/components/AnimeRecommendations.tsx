@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AnimeCard, AnimeCardContent, AnimeCardDescription, AnimeCardHeader, AnimeCardTitle } from '@/components/ui/anime-card';
 import { Badge } from '@/components/ui/badge';
-import { Star, Calendar, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Star, Calendar } from 'lucide-react';
 
 interface AnimeMovie {
   mal_id: number;
@@ -24,31 +23,51 @@ interface AnimeRecommendationsProps {
   selectedMood: string | null;
 }
 
-const moodToGenres: Record<string, string[]> = {
-  happy: ['Comedy', 'Romance', 'Slice of Life'],
-  sad: ['Drama', 'Romance', 'Supernatural'],
-  adventurous: ['Adventure', 'Action', 'Fantasy'],
-  mysterious: ['Mystery', 'Thriller', 'Supernatural'],
-  nostalgic: ['Drama', 'Historical', 'Slice of Life'],
-  energetic: ['Action', 'Sports', 'Shounen'],
-  peaceful: ['Slice of Life', 'Iyashikei', 'Josei'],
-  romantic: ['Romance', 'Drama', 'Shoujo']
+const moodToGenres: Record<string, number[]> = {
+  happy: [4, 22, 36], // Comedy, Romance, Slice of Life
+  sad: [8, 22, 37], // Drama, Romance, Supernatural
+  adventurous: [2, 1, 10], // Adventure, Action, Fantasy
+  mysterious: [7, 41, 37], // Mystery, Thriller, Supernatural
+  nostalgic: [8, 13, 36], // Drama, Historical, Slice of Life
+  energetic: [1, 30, 27], // Action, Sports, Shounen
+  peaceful: [36], // Slice of Life
+  romantic: [22, 8, 25], // Romance, Drama, Shoujo
 };
 
 const fetchAnimeRecommendations = async (mood: string): Promise<AnimeMovie[]> => {
-  const genres = moodToGenres[mood] || ['Action'];
-  const genreQuery = genres.join(',');
-  
-  const response = await fetch(
-    `https://api.jikan.moe/v4/anime?genres=${genreQuery}&type=movie&order_by=score&sort=desc&limit=10&min_score=7`
-  );
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch anime data');
-  }
-  
+  const genreIds = moodToGenres[mood] || [1];
+  const params = new URLSearchParams({
+    type: 'movie',
+    order_by: 'score',
+    sort: 'desc',
+    limit: '10',
+    min_score: '7',
+  });
+  params.set('genres', genreIds.join(','));
+
+  const url = `https://api.jikan.moe/v4/anime?${params.toString()}`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('Failed to fetch anime data');
   const data = await response.json();
-  return data.data?.slice(0, 5) || [];
+  let list: AnimeMovie[] = data.data || [];
+
+  // Fallback: if empty, try popularity with first genre only
+  if (!list.length && genreIds.length) {
+    const fallbackParams = new URLSearchParams({
+      type: 'movie',
+      order_by: 'popularity',
+      sort: 'asc',
+      limit: '10',
+    });
+    fallbackParams.set('genres', String(genreIds[0]));
+    const resp2 = await fetch(`https://api.jikan.moe/v4/anime?${fallbackParams.toString()}`);
+    if (resp2.ok) {
+      const data2 = await resp2.json();
+      list = data2.data || [];
+    }
+  }
+
+  return list.slice(0, 5);
 };
 
 const AnimeRecommendations: React.FC<AnimeRecommendationsProps> = ({ selectedMood }) => {
@@ -134,9 +153,9 @@ const AnimeRecommendations: React.FC<AnimeRecommendationsProps> = ({ selectedMoo
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">
-                  <div className="flex items-center gap-2 text-white text-sm">
+                  <div className="flex items-center gap-2 text-primary-foreground text-sm">
                     <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <Star className="w-4 h-4 text-accent" />
                       <span className="font-semibold">{anime.score}</span>
                     </div>
                     {anime.year && (
