@@ -17,7 +17,7 @@ const Header: React.FC = () => {
           </div>
         </div>
         <div>
-          <h1 className="text-4xl md:text-5xl font-bold anime-gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground">
             AniMood
           </h1>
           <p className="text-sm text-muted-foreground flex items-center justify-center gap-1 mt-1">

@@ -129,7 +129,7 @@ const AnimeRecommendations: React.FC<AnimeRecommendationsProps> = ({ selectedMoo
     <div className="space-y-6">
       <div className="text-center animate-anime-slide-in">
         <h2 className="text-2xl font-bold mb-2">
-          Perfect for your <span className="anime-gradient-primary bg-clip-text text-transparent capitalize">{selectedMood}</span> mood
+          Perfect for your <span className="text-primary capitalize font-bold">{selectedMood}</span> mood
         </h2>
         <p className="text-muted-foreground">
           Here are {recommendations?.length || 0} anime movies curated just for you!
